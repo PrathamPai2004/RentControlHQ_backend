@@ -41,13 +41,13 @@ def book_units():
 		"booking_id":new_booking.id
 	}),201
 
-#view-boooking
+#view-boooking (admin: all bookings)
 @booking_bp.route('/get-bookings',methods=['GET'])
 @admin_required
 def view_bookings():
 	bookings = Booking.query.all()
 
-	return([
+	return(jsonify([
 		{
 			'id':booking.id,
 			'user_id':booking.user_id,
@@ -55,7 +55,23 @@ def view_bookings():
 			'status':booking.status
 		}
 		for booking in bookings
+	]))
+
+# view my bookings (user: own bookings only)
+@booking_bp.route('/my-bookings', methods=['GET'])
+@jwt_required()
+def my_bookings():
+	user_id = get_jwt_identity()
+	bookings = Booking.query.filter_by(user_id=int(user_id)).all()
+	return jsonify([
+		{
+			'id': b.id,
+			'unit_id': b.unit_id,
+			'status': b.status
+		}
+		for b in bookings
 	])
+
 
 
 @booking_bp.route('/<int:id>/approve',methods=['PUT'])

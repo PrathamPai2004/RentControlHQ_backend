@@ -4,8 +4,26 @@ from models.user import User
 from flask_jwt_extended import create_access_token
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Message
+from utils.decorators import admin_required
 
 auth_bp = Blueprint("auth", __name__)
+
+# Admin: list all users
+@auth_bp.route('/users', methods=['GET'])
+@admin_required
+def get_all_users():
+    users = User.query.filter_by(role='user').all()
+    return jsonify([
+        {
+            'id': u.id,
+            'name': u.name,
+            'email': u.email,
+            'role': u.role,
+            'is_verified': u.is_verified
+        }
+        for u in users
+    ])
+
 
 verification_message ="Hello  {user_email},\n\nPlease click the link below to verify your email address:\n\n{confirm_url}\n\nIf you did not create an account, please ignore this email.\n\nThank you! \nRental Management System Team"
 
@@ -81,7 +99,11 @@ def login():
 
     access_token = create_access_token(
         identity=str(user.id),   # must be string
-        additional_claims={"role": user.role}
+        additional_claims={
+            "role":  user.role,
+            "name":  user.name,
+            "email": user.email
+        }
     )
 
     return jsonify({"access_token": access_token})

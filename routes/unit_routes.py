@@ -34,22 +34,24 @@ def create_unit():
 		"status of unit":new_unit.status
 	}),201
 
-#viewing all units
+#viewing units
 @unit_bp.route('/get-units/<int:tower_id>',methods=['GET'])
-@admin_required
-def get_units(tower_id):	
-	units = Unit.query.filter_by(
-        tower_id=tower_id,
-        status="available"
-    ).all()
+@jwt_required()
+def get_units(tower_id):
+	show_all = request.args.get('all', 'false').lower() == 'true'
+
+	if show_all:
+		units = Unit.query.filter_by(tower_id=tower_id).all()
+	else:
+		units = Unit.query.filter_by(tower_id=tower_id, status="available").all()
 
 	return jsonify([
 		{
-			'unit id':unit.id,
-			'tower_id':unit.tower_id,
-			'unit_number':unit.unit_number,
-			'rent':unit.rent,
-			'status':unit.status
+			'unit id': unit.id,
+			'tower_id': unit.tower_id,
+			'unit_number': unit.unit_number,
+			'rent': unit.rent,
+			'status': unit.status
 		}
-	for unit in units
+		for unit in units
 	])

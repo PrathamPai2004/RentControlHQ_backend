@@ -15,7 +15,7 @@ def create_app():
     app.config.from_object(Config)
     db.init_app(app)
     jwt.init_app(app)
-    CORS(app)
+    # CORS configured after blueprints (see below)
     mail.init_app(app)
     # with app.app_context():
     #     Lease.__table__.create(bind=db.engine)
@@ -25,6 +25,28 @@ def create_app():
     app.register_blueprint(unit_bp,url_prefix='/units')
     app.register_blueprint(booking_bp,url_prefix='/bookings')
     app.register_blueprint(lease_bp,url_prefix='/leases')
+
+    # Explicit CORS — must be after all blueprints are registered
+    CORS(app,
+         origins=["http://localhost:4200", "http://127.0.0.1:4200"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+         allow_headers=["Content-Type", "Authorization"],
+         supports_credentials=True)
+    from models.tower import Tower
+    from models.unit import Unit
+
+    @app.route("/public/stats")
+    def public_stats():
+        try:
+            tower_count = Tower.query.count()
+            unit_count  = Unit.query.count()
+            return jsonify({
+                "towers": tower_count,
+                "units":  unit_count
+            })
+        except Exception as e:
+            return jsonify({"towers": 0, "units": 0}), 200
+
     @app.route("/")
     def test_db():
         try:
