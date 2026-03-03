@@ -35,6 +35,9 @@ def create_app():
     from models.tower import Tower
     from models.unit import Unit
 
+    @app.route("/health")
+    def health():
+        return jsonify({"message": "OK"})
     @app.route("/public/stats")
     def public_stats():
         try:
